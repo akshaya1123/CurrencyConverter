@@ -1,0 +1,14 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: currency-converter
+
+exchange-api:
+  # Get a free key at https://www.exchangerate-api.com and export EXCHANGE_API_KEY.
+  # If left empty, the free keyless endpoint (open.er-api.com) is used.
+  api-key: ${EXCHANGE_API_KEY:}
+  base-url: https://v6.exchangerate-api.com/v6
+  open-url: https://open.er-api.com/v6
+  cache-ttl-minutes: 60

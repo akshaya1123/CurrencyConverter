@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Currency Converter</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#f3f5f9;display:flex;justify-content:center;padding:40px 16px;margin:0}
+  .card{background:#fff;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.08);padding:28px;width:100%;max-width:420px}
+  h1{margin:0 0 20px;font-size:22px}
+  label{display:block;font-size:13px;color:#555;margin:14px 0 4px}
+  input,select{width:100%;padding:10px;border:1px solid #ccd;border-radius:8px;font-size:16px;box-sizing:border-box}
+  .row{display:flex;gap:8px;align-items:end}
+  .row>div{flex:1}
+  button{padding:10px 14px;border:0;border-radius:8px;background:#3b5bdb;color:#fff;font-size:16px;cursor:pointer}
+  #convert{width:100%;margin-top:20px}
+  #swap{background:#e7ebff;color:#3b5bdb}
+  #out{margin-top:20px;font-size:20px;font-weight:600;min-height:28px}
+  #meta{font-size:13px;color:#666;margin-top:4px}
+  .err{color:#c92a2a}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Currency Converter</h1>
+  <label for="amount">Amount</label>
+  <input id="amount" type="number" min="0" step="any" value="100">
+  <div class="row">
+    <div><label for="from">From</label><select id="from"></select></div>
+    <button id="swap" title="Swap">⇄</button>
+    <div><label for="to">To</label><select id="to"></select></div>
+  </div>
+  <button id="convert">Convert</button>
+  <div id="out"></div>
+  <div id="meta"></div>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+async function init() {
+  try {
+    const codes = await (await fetch('/api/currencies')).json();
+    for (const sel of [$('from'), $('to')])
+      sel.innerHTML = codes.map(c => `<option>${c}</option>`).join('');
+    $('from').value = 'USD';
+    $('to').value = codes.includes('INR') ? 'INR' : codes[1];
+  } catch (e) { $('out').innerHTML = '<span class="err">Could not load currencies</span>'; }
+}
+async function convert() {
+  $('out').textContent = ''; $('meta').textContent = '';
+  const q = new URLSearchParams({from: $('from').value, to: $('to').value, amount: $('amount').value});
+  const res = await fetch('/api/convert?' + q);
+  const data = await res.json();
+  if (!res.ok) { $('out').innerHTML = `<span class="err">${data.detail || 'Error'}</span>`; return; }
+  $('out').textContent = `${data.amount} ${data.from} = ${data.result} ${data.to}`;
+  $('meta').textContent = `1 ${data.from} = ${data.rate} ${data.to}`;
+}
+$('convert').onclick = convert;
+$('swap').onclick = () => { const f = $('from').value; $('from').value = $('to').value; $('to').value = f; };
+init();
+</script>
+</body>
+</html>
